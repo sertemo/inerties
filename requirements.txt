@@ -1,3 +1,5 @@
 pandas
 numpy
 opencv-python-headless
+pymongo
+python-dotenv

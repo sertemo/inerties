@@ -5,6 +5,7 @@ class Seccion:
   def __init__(self,dimensiones:list[Union[float,int],Union[float,int,None],Union[float,int,None]]):
     if not isinstance(dimensiones,Iterable):
       raise TypeError("Las dimensiones deben ser una lista o una tupla")
+    self.dimensiones = dimensiones
 
     if "CircularMacizo" in self.__class__.__name__ :
       assert len(dimensiones) == 1, "(radio)"
@@ -48,17 +49,20 @@ class Seccion:
   @property
   def tipo(self):
     return f"{self.__class__.__name__}"
+  
+  def to_dict(self):
+    """Función para transformar a dict la información necesaria para\
+    guardar en base de datos y posteriormente poder reconstruir la clase
+    """
+    seccion_dict = {
+      "tipo_seccion" : self.__class__.__name__,
+      "dimensiones" : self.dimensiones
+    }
+    return seccion_dict
 
   def __repr__(self):
     lista_params = [p for p in [self.x,self.y,self.e] if p is not None]
     return f'''{self.__class__.__name__}{lista_params}'''
-    #\nReferencia (0,0) desde la esquina superior izquierda
-    #\n---- Sección ----\nx (longitud) = {self.x} mm\ny (ancho) = {self.y} mm\ne (espesor) = {self.e} mm\nr (radio) = {self.r} mm
-    #\n---- Área y centroide ----\nArea: {self.area_centroide[0]:.1f} mm2\nPosición centroide (x,y): {self.area_centroide[1]}
-    #\n---- Inercias ----\nIx: {self.momentos_inercia[0]/1e4:,.1f} cm4\nIy: {self.momentos_inercia[1]/1e4:,.1f} cm4
-    #\n---- Modulos resistentes ----\nWx: {self.modulos_resistentes[0]/1e3:,.1f} cm3\nWy: {self.modulos_resistentes[1]/1e3:,.1f} cm3
-    #\n------------
-    # '''
 
 class SeccionRectangularMacizo(Seccion):
   def __init__(self,dimensiones:tuple[Union[float,int],Union[float,int,None],Union[float,int,None]]):
@@ -346,7 +350,7 @@ class SeccionCompuesta:
 
       for seccion in self.secciones:
         #En el caso de seccion circular el centroide y la referencia de la ubicacion coinciden
-        if x_centroide == seccion["ubicacion"][0]:
+        if round(x_centroide) == int(seccion["ubicacion"][0]):
           puntos_alejados_x.append(seccion["seccion"].x)
           puntos_alejados_y.append(seccion["seccion"].y)
         else:

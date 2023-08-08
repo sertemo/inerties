@@ -18,4 +18,16 @@ if __name__ == '__main__':
 
     st.title("Sections Composées - Propriétés mécaniques")
 
-    st.header(":yellow[Under construction]")
+    st.markdown(
+        """
+    <style>
+        .texto-amarillo {
+            font-size: 64px;
+            color: #FFD700;
+        }
+    </style>
+    <div class="texto-amarillo">
+    <b>⚠️ Under construction ⚠️</b>
+    </div>""",
+    unsafe_allow_html=True
+    )

@@ -301,7 +301,7 @@ def añadir_configuraciones_a_dict(
     return to_db
 
 if __name__ == '__main__':
-    st.title("Sections Composées - Propriétés mécaniques")
+    
     with st.expander("🟡 Informations Importantes"):
         st.markdown("""
                 - Les distances :green[**x**] et :green[**y**] sont en :red[mm].

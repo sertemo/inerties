@@ -16,4 +16,6 @@ st.set_page_config(
 
 if __name__ == '__main__':    
 
-    st.title("Sections composées")
+    st.title("Sections Composées - Propriétés mécaniques")
+
+    st.header(":yellow[Under construction]")

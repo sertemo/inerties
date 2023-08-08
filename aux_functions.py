@@ -9,6 +9,11 @@ def reset_todo(rerun_app:bool=True)->None:
         del st.session_state["secciones"]
     if st.session_state.get("seccion_compuesta",None) is not None:
         del st.session_state["seccion_compuesta"]
+    if st.session_state.get("vent_x",None) is not None:
+        del st.session_state["vent_y"]
+        del st.session_state["numerar_secciones"]
+        del st.session_state["color_homogeneo"]
+        del st.session_state["vent_x"]
     if rerun_app:
         st.experimental_rerun()
 
@@ -19,8 +24,8 @@ def cargar_seccion_compuesta()->None:
     if len(st.session_state["secciones"]) > 0:
         st.session_state["seccion_compuesta"] = sc.SeccionCompuesta(st.session_state["secciones"])
 
-def dibujar_seccion(img)->None:
+def dibujar_seccion(img,color_homogeneo,numerar_secciones)->None:
     """Dibuja la sección compuesta que esté cargada en la sesion en "seccion_compuesta"
     """
     if st.session_state.get("seccion_compuesta",None) is not None:
-        gf.GraficarSeccion().fit(seccion=st.session_state["seccion_compuesta"]).dibujar_seccion(img)
+        gf.GraficarSeccion().fit(seccion=st.session_state["seccion_compuesta"]).dibujar_seccion(img,color_homogeneo,numerar_secciones)

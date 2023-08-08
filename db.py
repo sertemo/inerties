@@ -1,6 +1,7 @@
 from pymongo import MongoClient
 import os
 from dotenv import load_dotenv
+from pprint import pprint
 import streamlit as st
 
 load_dotenv()
@@ -23,6 +24,7 @@ def sacar_secciones_db()->list:
         _description_
     """
     secciones = list(database.SeccionesCompuestas.find().sort("nombre_seccion"))
+
     #Borramos el id
     for seccion in secciones:
         del seccion["_id"]

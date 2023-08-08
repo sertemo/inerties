@@ -6,11 +6,16 @@ import pandas as pd
 import db
 import aux_functions as af
 
+st.set_page_config(
+    page_title="Calculer Sections Multiples",
+    page_icon="🧮",
+    layout="wide",
+    initial_sidebar_state="auto",
+)
+
 ## CONSTANTES ##
 DATABASE = db.get_database()
 SECTION_MAPPING = {
-    "SeccionCuadradoHueco" : sc.SeccionCuadradoHueco,
-    "SeccionCuadradoMacizo" : sc.SeccionCuadradoMacizo,
     "SeccionRectangularHueco" : sc.SeccionRectangularHueco,
     "SeccionRectangularMacizo" : sc.SeccionRectangularMacizo,
     "SeccionCircularHueco" : sc.SeccionCircularHueco,
@@ -98,13 +103,18 @@ def recuperar_seccion(nombre_seccion:str)->list:
     for seccion_compuesta in st.session_state["secciones_db"]:
         if seccion_compuesta["nombre_seccion"] == nombre_seccion:
             for seccion_simple in seccion_compuesta["secciones"]:
-                print(seccion_simple)
+
                 recu_sec = {
                     "seccion" : SECTION_MAPPING[seccion_simple["seccion"]["tipo_seccion"]](seccion_simple["seccion"]["dimensiones"]),
                     "ubicacion" : seccion_simple["ubicacion"],
                     "color" : seccion_simple["color"],
                 }
                 lista_secciones.append(recu_sec)
+            
+            #Cargamos a sesión las variables de visualización
+            params = ["vent_x","vent_y","numerar_secciones","color_homogeneo"]
+            for param in params:
+                st.session_state[param] = seccion_compuesta[param]
     
     return lista_secciones
 

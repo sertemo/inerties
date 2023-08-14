@@ -5,9 +5,12 @@ import graficar as gf
 import pandas as pd
 import db
 import aux_functions as af
+import traducciones as tr
 
+#Instanciamos el idioma
+idioma = st.session_state.get("idioma","fr")
 st.set_page_config(
-    page_title="Calculer Sections Multiples",
+    page_title=tr.TRANS_MAPPING["page_title"][idioma],
     page_icon="🧮",
     layout="wide",
     initial_sidebar_state="auto",
@@ -45,8 +48,8 @@ def visualizar_secciones_db()->None:
 
         df = pd.DataFrame(
             {
-                "Géométrie section" : lista_tipo_secciones,
-                "Emplacement (mm)" : lista_ubicaciones,
+                tr.TRANS_MAPPING["dataframe_geometria"][idioma] : lista_tipo_secciones,
+                tr.TRANS_MAPPING["dataframe_emplazamiento"][idioma] : lista_ubicaciones,
                 }
         ,
         index=lista_indices
@@ -56,14 +59,14 @@ def visualizar_secciones_db()->None:
         col1, col2 = st.columns(2)
         with col1:
             st.button(
-                "Dessiner section",
-                help="Récupère et dessine la section",
+                tr.TRANS_MAPPING["boton_dibujar_Seccion"][idioma],
+                help=tr.TRANS_MAPPING["boton_dibujar_Seccion_ayuda"][idioma],
                 key="dibujar_"+nombre_seccion,
             )
         with col2:
             st.button(
-                "Effacer section",
-                help="Efface la section pour toujours",
+                tr.TRANS_MAPPING["boton_borrar_Seccion"][idioma],
+                help=tr.TRANS_MAPPING["boton_borrar_Seccion_ayuda"][idioma],
                 key="borrar_"+nombre_seccion,
             )
 
@@ -119,21 +122,28 @@ def recuperar_seccion(nombre_seccion:str)->list:
     return lista_secciones
 
 if __name__ == '__main__':
-    st.title("Liste de sections enregistrées")
+    usuario_sesion = st.session_state.get("usuario","")
+    
+    if not usuario_sesion:
+        st.warning(tr.TRANS_MAPPING["registrarse_mensaje"][idioma])
+        st.stop()
+    
+    st.title(tr.TRANS_MAPPING["secciones_guardadas_titulo"][idioma] + f"{usuario_sesion}")
 
     if len(st.session_state.get("secciones_db",[])) > 0:
         visualizar_secciones_db()
 
     accion, seccion = comprobar_boton_pulsado()
     if accion == "borrar":
-        DATABASE["SeccionesCompuestas"].delete_one({"nombre_seccion" : seccion})
-        db.sacar_secciones_db()
+        DATABASE[usuario_sesion].delete_one({"nombre_seccion" : seccion})
+        db.aumentar_secciones_restantes(usuario_sesion)
+        db.sacar_secciones_db(usuario_sesion)
         st.experimental_rerun()
     elif accion == "dibujar":
         af.reset_todo(rerun_app=False)
         st.session_state["secciones"] = recuperar_seccion(seccion)
         af.cargar_seccion_compuesta()
         with st.sidebar:
-            st.success("Section chargée correctement")
+            st.success("Section chargée correctement") #TODO traduccion
 
     #st.session_state

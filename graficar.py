@@ -135,23 +135,21 @@ class GraficarSeccion:
                     e = self._escalar(seccion["seccion"].e)
                     self._draw_rotated_rectangle(img,(x,y),dx,dy,angulo,color,e)
 
-            elif "Circular" in tipo_seccion:
-                
-                radio = seccion["seccion"].x
-                x, y, radio = self._escalar((x,y,radio))
+            elif "Circular" in tipo_seccion:                
                 if "Macizo" in tipo_seccion:
-                    cv.circle(img= img,center= (x,y),radius=radio, color=color,thickness=-1)
-                elif "Hueco" in tipo_seccion:
-                    #!DEBUG                    
+                    cv.circle(img= img,center= (x,y),radius=dx, color=color,thickness=-1)
+                elif "Hueco" in tipo_seccion:                                       
                     e = self._escalar(seccion["seccion"].e)
-                    print(f"Seccion circular Hueca, {e}")
-                    cv.circle(img=img, center=(x,y), radius=radio-e,color=color,thickness=e)
+                    cv.circle(img=img, center=(x,y), radius=dx-e,color=color,thickness=e)
 
             if numerar_secciones:
-                if "Macizo" in tipo_seccion:
-                    cv.putText(img,f"{idx}",(x,y), self.FONT_2, self._escalar(0.3),self.COLOR_RED,1,cv.LINE_AA)
+                if "Macizo" in tipo_seccion:              
+                        cv.putText(img,f"{idx}",(x+self._escalar(4),y+self._escalar(5)), self.FONT_2, self._escalar(0.3),self.COLOR_RED,1,cv.LINE_AA)
                 else:
-                    cv.putText(img,f"{idx}",(x+dx//2-e,y+dy//2-e), self.FONT_2, self._escalar(0.3),self.COLOR_RED,1,cv.LINE_AA)
+                    if "Circular" in tipo_seccion:
+                        cv.putText(img,f"{idx}",(x+dx-self._escalar(2),y+self._escalar(5)), self.FONT_2, self._escalar(0.3),self.COLOR_RED,1,cv.LINE_AA)
+                    else:
+                        cv.putText(img,f"{idx}",(x+dx//2-e,y+dy//2-e), self.FONT_2, self._escalar(0.3),self.COLOR_RED,1,cv.LINE_AA)
 
         #Dibujamos el centroide de la seccion compuesta
         self._dibujar_centroide(img,self.seccion.area_centroide[1])

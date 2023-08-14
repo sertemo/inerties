@@ -15,8 +15,9 @@ Las secciones suelen ser rectangulares, cuadradas y circulares. Se pueden repres
     - Cambiado el centro de referencia para la inserción al centro de la sección para todas las secciones
     - Añadidas dos opciones de visualización: Monocolor y numerar las secciones
     - Añadida la posibilidad de guardar y cargar las opciones de visualización a la vez que las secciones
+-12/08/2023 - Creado sistema sencillo de registro y autenticación y bases de datos para que cada usuario pueda guardar sus propias secciones. Se ha puesto un límite de 5 secciones máximas para guardar de momento. Al registrarse el usuario está inactivo, se envía un mail al administrador que deberá activar manualmente al usuario para que pueda usar la aplicación.
+- 14/08/2023 - Posibilidad de cambiar idioma de los textos
 
 ## Ideas para implementar
-- Averiguar por qué las secciones circulares no se dibujan..
-- Crear perfiles de usuarios de tal manera que cada uno pueda guardar sus secciones en una base de datos personal. Contraseñas y nombres de usuarios asi como validaciones. Si no estás registrado no te deja guardar la sección.
-- Crear página 'Accueil' en la que puedes solicitar registrarte: envio de mail a mi correo para confirmar. El usuario se da de alta pero la cuenta no está activa. Yo la tengo que activar manualmente cambiando 'activa' = `True` por ejemplo.
+- Mejorar el código para el cálculo de Wx e Wy
+- Terminar traducciones

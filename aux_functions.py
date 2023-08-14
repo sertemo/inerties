@@ -1,6 +1,7 @@
 import streamlit as st
 import secciones as sc
 import graficar as gf
+import traducciones as tr
 
 def reset_todo(rerun_app:bool=True)->None:
     """Borra todas las secciones

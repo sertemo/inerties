@@ -6,9 +6,13 @@ import pandas as pd
 import aux_functions as af
 import db
 import time
+import traducciones as tr
+
+#Cargamos el idioma de la sesión para traducir los textos
+idioma = st.session_state.get("idioma","fr")
 
 st.set_page_config(
-    page_title="Calculer Sections Multiples",
+    page_title=tr.TRANS_MAPPING["page_title"].get(idioma,""),
     page_icon="🧮",
     layout="wide",
     initial_sidebar_state="auto",
@@ -243,24 +247,21 @@ def secciones_to_dict(nombre_seccion:str)->dict:
         "secciones" : list_secciones_dict,
     }
 
-def insertar_db_seccion_compuesta(dict_seccion:dict)->None:
-    """Recibe un dict que representa la seccion compuesta
-    e inserta en db 
+def insertar_db_seccion_compuesta(dict_seccion:dict,usuario_sesion:str)->None:
+    """Recibe el dict de la seccion compuesta y el usuario y guarda la seccion
+    en la db del usuario para poder recuperarla mas adelante
 
     Parameters
     ----------
     dict_seccion : dict
         _description_
-
-    Returns
-    -------
-    _type_
+    usuario_sesion : str
         _description_
     """
 
-    DATABASE["SeccionesCompuestas"].insert_one(dict_seccion)
+    DATABASE[usuario_sesion].insert_one(dict_seccion)
 
-def nombre_seccion_valido(nombre_seccion:str)->tuple[bool,str]:
+def nombre_seccion_valido(nombre_seccion:str,usuario_sesion:str)->tuple[bool,str]:
     """Función para validar que el nombre de la sección no existe ya en la base de datos
     Si existe devuelve un error
 
@@ -270,13 +271,13 @@ def nombre_seccion_valido(nombre_seccion:str)->tuple[bool,str]:
         _description_
     """
     #Validamos que no esté vacío
-    if nombre_seccion == "":
+    if not nombre_seccion:
         return False, "Le nom de la section ne peut pas être vide."
     #Validamos que haya una seccion cargada
     if not st.session_state.get("secciones",[]):
         return False, "Aucune section pour enregistrer"
     #Validamos que el nombre no exista ya:
-    if DATABASE["SeccionesCompuestas"].find_one({"nombre_seccion" : nombre_seccion}) is not None:
+    if DATABASE[usuario_sesion].find_one({"nombre_seccion" : nombre_seccion}) is not None:
         return False, "Le nom de la section existe déjà."
 
     return True, ""
@@ -301,6 +302,11 @@ def añadir_configuraciones_a_dict(
     return to_db
 
 if __name__ == '__main__':
+    #Verificamos que haya usuario en sesión
+    usuario_sesion = st.session_state.get("usuario","")
+    if not usuario_sesion:
+        st.warning(tr.TRANS_MAPPING["registrarse_mensaje"][idioma])
+        st.stop()
     
     with st.expander("🟡 Informations Importantes"):
         st.markdown("""
@@ -333,7 +339,8 @@ if __name__ == '__main__':
     img = definir_ventana_personalizada(vent_x,vent_y)
     #Inicializamos variables de sesion necesarias
     init_sesion(contenedor,img)
-    db.sacar_secciones_db()
+    #Sacamos todas las secciones de la db de ese usuario
+    db.sacar_secciones_db(usuario_sesion)
 
     with st.sidebar:
         st.header("🖊 Dessiner la section")
@@ -399,49 +406,48 @@ if __name__ == '__main__':
             af.reset_todo()
 
         with st.expander("Enregistrer la section 💾"):
+            st.write(f"Sections disponibles pour :blue[*{usuario_sesion}*] : {db._devolver_secciones_restantes(usuario_sesion)}")
             nombre_seccion = st.text_input(
                 "Nom de la section",
-            )
-            usuario = st.text_input(
-                "Utilisateur",
-            )
-            password = st.text_input(
-                "Mot de pass",
-                type="password",
             )
             guardar = st.button(
                 "Enregistrer",
             )
 
             if guardar:
-                nombre_valido, error_nombre = nombre_seccion_valido(nombre_seccion)
+                nombre_valido, error_nombre = nombre_seccion_valido(nombre_seccion,usuario_sesion)
                 if not nombre_valido:
                     st.error(f"{error_nombre}")
                                     
                 else:
-                    to_db = secciones_to_dict(nombre_seccion)
-                    #Guardamos la configuración de la pantalla y las opciones de visualización
-                    to_db = añadir_configuraciones_a_dict(
-                        to_db,
-                        dim_ventana=(vent_x,vent_y),
-                        numerar_secciones=numerar_secciones,
-                        color_homogeneo=color_homogeneo)
-                    try:
-                        insertar_db_seccion_compuesta(to_db)
-                        st.success("Enregistrement correct.")
-                        time.sleep(2)
-                        st.experimental_rerun()
+                    if not db.verificar_secciones_restantes(usuario_sesion):
+                        st.error("Vous ne pouvez plus enregistrer de sections. Vous avez atteint la limite")
+                    else:
+                        to_db = secciones_to_dict(nombre_seccion)
+                        #Guardamos la configuración de la pantalla y las opciones de visualización
+                        to_db = añadir_configuraciones_a_dict(
+                            to_db,
+                            dim_ventana=(vent_x,vent_y),
+                            numerar_secciones=numerar_secciones,
+                            color_homogeneo=color_homogeneo)                        
+                        
+                        try:
+                            insertar_db_seccion_compuesta(to_db,usuario_sesion)
+                            st.success("Enregistrement correct.")
+                            db.reducir_secciones_restantes(usuario_sesion)
+                            with st.spinner("Patientez..."):
+                                time.sleep(2)
+                            st.experimental_rerun()
 
-                    except Exception as exc:
-                        st.error("Une erreur s'est produite lors de l'enregistrement.")
+                        except Exception as exc:
+                            st.error(f"Une erreur s'est produite lors de l'enregistrement: {exc}")
 
         with st.expander("Voir sections dessinées"):
             mostrar_secciones_cargadas()
-
-        st.caption("Done by STM w/💗 2023")
+        
     af.cargar_seccion_compuesta()
     af.dibujar_seccion(img,numerar_secciones=numerar_secciones,color_homogeneo=color_homogeneo)
     
     if st.session_state.get("seccion_compuesta",None) is not None:
         cargar_dataframe()
-    #st.session_state
+    

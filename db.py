@@ -41,7 +41,7 @@ class PyObjectId(ObjectId):
     
     @classmethod #método agregado de GPT-4 para solucionar un problema a la hora de desplegar el script en Streamlit
     def __get_pydantic_core_schema__(cls, handler: Any) -> Any:
-        return handler.generate_schema(cls, {"type": "string"})
+        return {"type": "string"}
 
 class MongoBaseModel(BaseModel):
     id: PyObjectId = Field(default_factory = PyObjectId, alias="_id")

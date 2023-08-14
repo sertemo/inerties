@@ -24,7 +24,7 @@ def get_database()-> MongoClient:
 def format_datetime():
     return datetime.strftime(datetime.now(tz=pytz.timezone('Europe/Madrid')),format="%d-%m-%Y %H:%M:%S")
 
-class PyObjectId(ObjectId):
+""" class PyObjectId(ObjectId):
     @classmethod
     def __get_validators__(cls):
         yield cls.validate
@@ -39,14 +39,13 @@ class PyObjectId(ObjectId):
     def __modify_schema__(cls, field_schema):
         field_schema.update({"type": "string", "format": "objectid"})
 
-
 class MongoBaseModel(BaseModel):
     id: PyObjectId = Field(default_factory = PyObjectId, alias="_id")
 
     class Config:
-        json_encoders = {ObjectId : str} #Esto se usa para serializar el json
+        json_encoders = {ObjectId : str} #Esto se usa para serializar el json """
 
-class UsuarioRegistro(MongoBaseModel):
+class UsuarioRegistro(BaseModel):
     nombre:Optional[str]
     usuario:str
     contraseña:str
@@ -54,7 +53,7 @@ class UsuarioRegistro(MongoBaseModel):
     secciones_restantes: int = NUM_SECCIONES
     activo:bool = False
 
-class Usuario(MongoBaseModel):
+class Usuario(BaseModel):
     usuario:str
     contraseña:str
     secciones_restantes:int

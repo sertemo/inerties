@@ -7,7 +7,7 @@ from datetime import datetime
 import pytz
 from bson import ObjectId
 from passlib.context import CryptContext #Para hashear passwords. Ojo: no es posible desencriptar con passlib
-from typing import Optional, Union
+from typing import Optional, Union, Any
 
 load_dotenv()
 
@@ -38,6 +38,10 @@ class PyObjectId(ObjectId):
     @classmethod
     def __modify_schema__(cls, field_schema):
         field_schema.update(type="string")
+    
+    @classmethod #método agregado de GPT-4 para solucionar un problema a la hora de desplegar el script en Streamlit
+    def __get_pydantic_core_schema__(cls, handler: Any) -> Any:
+        return handler.generate_schema(cls, {"type": "string"})
 
 class MongoBaseModel(BaseModel):
     id: PyObjectId = Field(default_factory = PyObjectId, alias="_id")

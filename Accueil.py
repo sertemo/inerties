@@ -6,7 +6,7 @@ import os
 import traducciones as tr
 
 st.set_page_config(
-    page_title="Calculer Sections Multiples",
+    page_title="Graphicator by STM",
     page_icon="🧮",
     layout="wide",
     initial_sidebar_state="auto",
@@ -51,50 +51,52 @@ if __name__ == '__main__':
 
     with st.sidebar:
         idioma = st.radio(
-            "Idioma",
-            ("es","fr","en"),
-            index=LANG_MAPPING[st.session_state.get("idioma","fr")]
+            label="Idioma",
+           options=("es","fr","en"),
+            index=LANG_MAPPING[st.session_state.get("idioma","fr")],
+            label_visibility="hidden",
         )
 
     st.session_state["idioma"] = idioma
 
-    st.title(tr.TRANS_MAPPING["Accueil_title"].get(idioma,""))
+    st.title(tr.TRANS_MAPPING["Accueil_title"][idioma])
+    st.subheader(tr.TRANS_MAPPING["Accueil_descripcion"][idioma])
 
     #Formulario para autenticarse
     if not st.session_state.get("usuario",""):
-        with st.form("S'identifier"):
-            st.write("Rentrez votre utilisateur et mot de passe pour continuer")
-            user = st.text_input("Utilisateur")
-            password = st.text_input("Mot de passe",type="password")
-            submit = st.form_submit_button("Envoyer")
+        with st.form("identificarse"):
+            st.write(tr.TRANS_MAPPING["formulario_autenticar"][idioma])
+            user = st.text_input(tr.TRANS_MAPPING["formulario_usuario"][idioma])
+            password = st.text_input(tr.TRANS_MAPPING["formulario_contraseña"][idioma],type="password")
+            submit = st.form_submit_button(tr.TRANS_MAPPING["formulario_enviar"][idioma])
 
             if submit and user and password:
                 #Verificamos que usuario exista en db
                 usuario:db.Usuario = db.existe_usuario_en_db(user)
                 if not usuario:
-                    st.error("Cet utilisateur n'existe pas.")
+                    st.error(tr.TRANS_MAPPING["usuario_no_existe"][idioma])
                 else:
                     if not db.verificar_contraseña(password,usuario.contraseña):
-                        st.error("Le mot de pass n'est pas correcte.")
+                        st.error(tr.TRANS_MAPPING["contraseña_incorrecta"][idioma])
                     else:
                         if not usuario.activo:
-                            st.warning("Le compte est inactif. Demandez à l'administrateur de l'activer.")
+                            st.warning(tr.TRANS_MAPPING["cuenta_inactiva"][idioma])
                         else:
                             st.success("OK")
                             st.session_state["usuario"] = user
-                            with st.spinner("En train de charger vos données.."):
+                            with st.spinner(tr.TRANS_MAPPING["cargar_datos"][idioma]):
                                 time.sleep(2)
                                 st.experimental_rerun()
 
         #Formulario para registrarse
-        st.caption("Pas enregistré(e) encore ? Remplissez le formulaire plus bas")
-        with st.expander("S'inscrire dans la base de données pour pouvoir dessiner des sections"):
-            with st.form("S'inscrire"):
-                reg_nombre_usuario = st.text_input("Prénom et nom de l'utilisateur")
-                reg_user = st.text_input("Utilisateur",help="L'utilisateur ne peut pas avoir d'espaces vides et devra comporter plus de 5 lettres")
-                reg_password = st.text_input("Mot de passe",type="password")
-                reg_submit = st.form_submit_button("S'inscrire")
-                st.write("Quand vous enregistrez le compte votre utilisateur sera créé mais votre compte sera inactif.")
+        st.caption(tr.TRANS_MAPPING["pregunta_registrar"][idioma])
+        with st.expander(tr.TRANS_MAPPING["frase_expander_registrar"][idioma]):
+            with st.form("registrarse"):
+                reg_nombre_usuario = st.text_input(tr.TRANS_MAPPING["nombre_usuario"][idioma])
+                reg_user = st.text_input(tr.TRANS_MAPPING["formulario_usuario"][idioma],help=tr.TRANS_MAPPING["ayuda_nombre_usuario"][idioma])
+                reg_password = st.text_input(tr.TRANS_MAPPING["formulario_contraseña"][idioma],type="password")
+                reg_submit = st.form_submit_button(tr.TRANS_MAPPING["boton_registrarse"][idioma])
+                st.info(tr.TRANS_MAPPING["info_registrarse"][idioma])
 
                 if reg_submit:
                     #Verificar user y password válido
@@ -108,15 +110,15 @@ if __name__ == '__main__':
                         st.stop()              
                     #Verificar que ese user no exista en base de datos
                     if db.existe_usuario_en_db(reg_user):
-                        st.error("Cet utilisateur existe déjà.")
+                        st.error(tr.TRANS_MAPPING["usuario_ya_existe"][idioma])
                         st.stop()
                     #Mostrar mensaje de que registro correcto
                     usuario_db = {"nombre" : reg_nombre_usuario, "usuario" : reg_user, "contraseña" : hash_pass_o_error}
                     try:
                         db.insertar_usuario_en_db(db.UsuarioRegistro(**usuario_db))                        
-                        st.success("Enregistrement correcte. L'administrateur activera votre compte dans les plus brefs délais.")
+                        st.success(tr.TRANS_MAPPING["usuario_ya_existe"][idioma])
                     except Exception as exc:
-                        st.error(f"Une erreur s'est produite: {exc}")
+                        st.error( tr.TRANS_MAPPING["usuario_ya_existe"][idioma]+f"{exc}")
                     #Enviamos mail al admin para avisar del registro
                     mandar_email(db.UsuarioRegistro(**usuario_db))
 

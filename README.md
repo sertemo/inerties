@@ -1,4 +1,5 @@
-# Sections Composées - Propriétés mécaniques
+# Graphicator
+## Sections Composées - Propriétés mécaniques
 Enlace a la app: [Graphicator](https://graphicator.streamlit.app/)
 
 - App creada para calcular los momentos de inercia y módulos resistentes de secciones compuestas.

@@ -1,4 +1,4 @@
-# Graphicator
+# 🧮 Graphicator
 ## Sections Composées - Propriétés mécaniques
 Enlace a la app: [Graphicator](https://graphicator.streamlit.app/)
 

@@ -18,7 +18,7 @@ YAG = yagmail.SMTP("tejedor.moreno.dev@gmail.com",GOOGLE_API_KEY)
 LANG_MAPPING = {
     "es" : 0,
     "fr" : 1,
-    "en" : 2
+    #"en" : 2
 }
 
 #Funciones
@@ -52,7 +52,7 @@ if __name__ == '__main__':
     with st.sidebar:
         idioma = st.radio(
             label="Idioma",
-           options=("es","fr","en"),
+           options=("es","fr"),
             index=LANG_MAPPING[st.session_state.get("idioma","fr")],
             label_visibility="hidden",
         )

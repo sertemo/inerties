@@ -161,7 +161,7 @@ def mostrar_opciones_seccion(seccion:str)->None:
             step=10.0,
             value=25.0,
             min_value=20.0,
-            max_value=200.0,
+            max_value=300.0,
             format="%.1f"
             #key="x",
         )
@@ -182,7 +182,7 @@ def mostrar_opciones_seccion(seccion:str)->None:
             format="%.1f",
             value=25.0,
             min_value=1.0,
-            max_value=200.0,
+            max_value=300.0,
             #key="x",
         )
         y = st.number_input(
@@ -191,7 +191,7 @@ def mostrar_opciones_seccion(seccion:str)->None:
             format="%.1f",
             value=25.0,
             min_value=1.0,
-            max_value=200.0,
+            max_value=300.0,
             #key="y",
         )
         if "Tube" in seccion:

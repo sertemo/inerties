@@ -11,7 +11,7 @@ import traducciones as tr
 from collections import defaultdict
 
 #Cargamos el idioma de la sesión para traducir los textos
-idioma = st.session_state["idioma"]
+idioma = st.session_state.get("idioma","fr")
 
 st.set_page_config(
     page_title=tr.TRANS_MAPPING["page_title"][idioma],

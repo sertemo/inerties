@@ -64,7 +64,7 @@ if __name__ == '__main__':
 
     #Formulario para autenticarse
     if not st.session_state.get("usuario",""):
-        with st.form("identificarse"):
+        with st.form("identificarse",clear_on_submit=True):
             st.write(tr.TRANS_MAPPING["formulario_autenticar"][idioma])
             user = st.text_input(tr.TRANS_MAPPING["formulario_usuario"][idioma])
             password = st.text_input(tr.TRANS_MAPPING["formulario_contraseña"][idioma],type="password")
@@ -91,7 +91,7 @@ if __name__ == '__main__':
         #Formulario para registrarse
         st.caption(tr.TRANS_MAPPING["pregunta_registrar"][idioma])
         with st.expander(tr.TRANS_MAPPING["frase_expander_registrar"][idioma]):
-            with st.form("registrarse"):
+            with st.form("registrarse", clear_on_submit=True):
                 reg_nombre_usuario = st.text_input(tr.TRANS_MAPPING["nombre_usuario"][idioma])
                 reg_user = st.text_input(tr.TRANS_MAPPING["formulario_usuario"][idioma],help=tr.TRANS_MAPPING["ayuda_nombre_usuario"][idioma])
                 reg_password = st.text_input(tr.TRANS_MAPPING["formulario_contraseña"][idioma],type="password")
@@ -118,20 +118,15 @@ if __name__ == '__main__':
                         db.insertar_usuario_en_db(db.UsuarioRegistro(**usuario_db))                        
                         st.success(tr.TRANS_MAPPING["usuario_ya_existe"][idioma])
                     except Exception as exc:
-                        st.error( tr.TRANS_MAPPING["usuario_ya_existe"][idioma]+f"{exc}")
+                        st.error(tr.TRANS_MAPPING["usuario_ya_existe"][idioma]+f"{exc}")
                     #Enviamos mail al admin para avisar del registro
                     mandar_email(db.UsuarioRegistro(**usuario_db))
 
     else:
-        #TODO: mostrar información de la app si es usuario ya está autenticado
-        st.header("""
-        Utilisation""")
-        st.markdown(f"""
-                1. Aller à 'Définir section'
-                2. Lire les 'informations importantes'
-                3. Dessiner une section simple ou composée
-                4. Vous avez le droit d'enregistrer jusqu'à {db.NUM_SECCIONES} sections différentes
-                5. Dans 'Sections enregistrées' vous pouvez dessiner et gérer les sections que vous avez enregistrés.""")
+        #Información al usuario autenticado
+        st.header(
+        tr.TRANS_MAPPING["header_utilizacion"][idioma])
+        st.markdown(tr.TRANS_MAPPING["info_utilizacion"][idioma])
         
         st.caption("Done by STM w/💗 2023")
 

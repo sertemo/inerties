@@ -1,3 +1,5 @@
+import db
+
 TRANS_MAPPING = {
     "Accueil_title" : {
         "fr" : "🧮 Graphicator",
@@ -139,5 +141,26 @@ TRANS_MAPPING = {
         "es" : "Se ha producido el siguiente error: ",
         "en" : ""
     },
+    "header_utilizacion" : {
+        "fr" : "Utilisation",
+        "es" : "Utilización",
+        "en" : ""
+    },
+    "info_utilizacion" : {
+        "fr" : f"""
+                1. Allez à 'Definir section'
+                2. Lire les informations importatnes
+                3. Dessiner une section simple ou composée
+                4. Vous pouvez enregistrer jusqu'à {db.NUM_SECCIONES} sections différentes
+                5. Dans 'Sections enregistrées' vous pouvez récupérer, dessiner et supprimer les sections enregistrées""",
+        "es" : f"""
+                1. Ir a 'Definir section'
+                2. Leer las informaciones importantes
+                3. Dibujar una sección simple o compuesta
+                4. Puedes guardar hasta {db.NUM_SECCIONES} secciones diferentes
+                5. En el apartado 'Sections enregistrées' puedes recuperar, dibujar y borrar las secciones guardadas""",
+        "en" : ""
+    },
+  
 
 }

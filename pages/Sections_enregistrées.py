@@ -118,7 +118,7 @@ def recuperar_seccion(nombre_seccion:str)->list:
             params = ["vent_x","vent_y","numerar_secciones","color_homogeneo"]
             for param in params:
                 st.session_state[param] = seccion_compuesta[param]
-    
+
     return lista_secciones
 
 if __name__ == '__main__':

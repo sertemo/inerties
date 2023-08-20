@@ -8,22 +8,30 @@ import db
 import time
 import traducciones as tr
 
+from collections import defaultdict
+
 #Cargamos el idioma de la sesión para traducir los textos
-idioma = st.session_state.get("idioma","fr")
+idioma = st.session_state["idioma"]
 
 st.set_page_config(
-    page_title=tr.TRANS_MAPPING["page_title"].get(idioma,""),
+    page_title=tr.TRANS_MAPPING["page_title"][idioma],
     page_icon="🧮",
     layout="wide",
     initial_sidebar_state="auto",
 )
 
 ## CONSTANTES ##
-SECTION_MAPPING = {
+SECTION_MAPPING_FR = {
     "Tube Rectangle" : sc.SeccionRectangularHueco,
     "Rectangle plein" : sc.SeccionRectangularMacizo,
     "Tube Rond" : sc.SeccionCircularHueco,
     "Rond Plein" : sc.SeccionCircularMacizo,
+}
+SECTION_MAPPING_ES = {
+    "Tubo Rectangular" : sc.SeccionRectangularHueco,
+    "Rectangulo macizo" : sc.SeccionRectangularMacizo,
+    "Tubo redondo" : sc.SeccionCircularHueco,
+    "Redondo macizo" : sc.SeccionCircularMacizo,
 }
 DATABASE = db.get_database()
 
@@ -32,7 +40,7 @@ def init_sesion(contenedor,img)->None:
     """Inicializa las variables de sesión
     """
     st.session_state["secciones"] = st.session_state.get("secciones",[])
-    if st.session_state.get("seccion_compuesta",None) is None:
+    if st.session_state.get("seccion_compuesta") is None:
         gf.GraficarSeccion()._dibujar_ejes_coord(img)
         gf.GraficarSeccion()._dibujar_regla(img)
         contenedor.image(img)
@@ -99,7 +107,10 @@ def agregar_seccion(
         coord_y:float)->None:
     """ Agrega la sección a la variable de sesión  """
     #Sacamos la clase correspondiente a la seccion
-    clase_seccion = SECTION_MAPPING[seccion]
+    if idioma == "fr":        
+        clase_seccion = SECTION_MAPPING_FR[seccion]
+    elif idioma == "es":
+        clase_seccion = SECTION_MAPPING_ES[seccion]
     #Filtramos las dimensiones
     dimensiones = [dim for dim in dimensiones if dim is not None]
     st.session_state["secciones"].append({
@@ -115,7 +126,7 @@ def borrar_seccion()->None:
         st.session_state["secciones"].pop()
         st.experimental_rerun()
     else:
-        st.error("La liste de sections est déjà vide")
+        st.error("La liste de sections est déjà vide") #TODO traduccion
     
 def cargar_dataframe()->None:
     """Carga DataFrame con los datos más relevantes de la sección compuesta.
@@ -156,7 +167,7 @@ def mostrar_opciones_seccion(seccion:str)->None:
     """
     x,y,e = None, None, None
 
-    if "Rectangle" in seccion:
+    if "Rectang" in seccion:
         x = st.number_input(
             "longueur (x) en mm",
             step=10.0,
@@ -184,7 +195,7 @@ def mostrar_opciones_seccion(seccion:str)->None:
             format="%d",
             help="Angle en sens anti-horaire par rapport à l'horizontale."
         )
-        if "Tube" in seccion:
+        if "Tub" in seccion:
             e = st.number_input(
                 "épaisseur du rectangle (e) en mm",
                 step=1.0,
@@ -194,7 +205,7 @@ def mostrar_opciones_seccion(seccion:str)->None:
                 format="%.1f",
                 #key="e",
             )
-    if "Rond" in seccion:
+    if "Rond" in seccion or "Redondo" in seccion:
         x = st.number_input(
             "ø (d) en mm",
             step=10.0,
@@ -206,7 +217,7 @@ def mostrar_opciones_seccion(seccion:str)->None:
         )
         x = x / 2
         angulo = None
-        if "Tube" in seccion:
+        if "Tub" in seccion:
             e = st.number_input(
                 "épaisseur du rond (e) en mm",
                 step=1.0,
@@ -357,7 +368,7 @@ if __name__ == '__main__':
 
         seccion = st.selectbox(
             "Type de section",
-            get_section_names(SECTION_MAPPING),
+            get_section_names(SECTION_MAPPING_FR if idioma == "fr" else SECTION_MAPPING_ES),
         )
 
         x, y, e, angulo = mostrar_opciones_seccion(seccion)
@@ -451,3 +462,4 @@ if __name__ == '__main__':
     if st.session_state.get("seccion_compuesta",None) is not None:
         cargar_dataframe()
     
+#st.session_state

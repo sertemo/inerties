@@ -24,7 +24,6 @@ def get_database()-> MongoClient:
 def format_datetime():
     return datetime.strftime(datetime.now(tz=pytz.timezone('Europe/Madrid')),format="%d-%m-%Y %H:%M:%S")
 
-#Quitada toda la lógica de MongoBaseModel porque daba problemas a la hora de subir a Stremalit
 """ class PyObjectId(ObjectId):
     @classmethod
     def __get_validators__(cls):

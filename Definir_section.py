@@ -6,32 +6,22 @@ import pandas as pd
 import aux_functions as af
 import db
 import time
-import traducciones as tr
-
-from collections import defaultdict
-
-#Cargamos el idioma de la sesión para traducir los textos
-idioma = st.session_state.get("idioma","fr")
 
 st.set_page_config(
-    page_title=tr.TRANS_MAPPING["page_title"][idioma],
+    page_title="Calculer Sections Multiples",
     page_icon="🧮",
     layout="wide",
     initial_sidebar_state="auto",
 )
 
 ## CONSTANTES ##
-SECTION_MAPPING_FR = {
+SECTION_MAPPING = {
+    "Tube Carré" : sc.SeccionCuadradoHueco,
+    "Carré plein" : sc.SeccionCuadradoMacizo,
     "Tube Rectangle" : sc.SeccionRectangularHueco,
     "Rectangle plein" : sc.SeccionRectangularMacizo,
     "Tube Rond" : sc.SeccionCircularHueco,
     "Rond Plein" : sc.SeccionCircularMacizo,
-}
-SECTION_MAPPING_ES = {
-    "Tubo Rectangular" : sc.SeccionRectangularHueco,
-    "Rectangulo macizo" : sc.SeccionRectangularMacizo,
-    "Tubo redondo" : sc.SeccionCircularHueco,
-    "Redondo macizo" : sc.SeccionCircularMacizo,
 }
 DATABASE = db.get_database()
 
@@ -40,7 +30,7 @@ def init_sesion(contenedor,img)->None:
     """Inicializa las variables de sesión
     """
     st.session_state["secciones"] = st.session_state.get("secciones",[])
-    if st.session_state.get("seccion_compuesta") is None:
+    if st.session_state.get("seccion_compuesta",None) is None:
         gf.GraficarSeccion()._dibujar_ejes_coord(img)
         gf.GraficarSeccion()._dibujar_regla(img)
         contenedor.image(img)
@@ -86,7 +76,7 @@ def get_section_names(section_mapping:dict)->list[str]:
     """
     return [sec for sec in section_mapping.keys()]
 
-def mostrar_secciones_cargadas()->None:
+def mostrar_secciones_cargadas()->None: #!No se usa
     """Itera sobre las secciones cargadas y las muestra en pantalla
     """
     for idx, seccion in enumerate(st.session_state["secciones"],start=1):
@@ -95,6 +85,7 @@ def mostrar_secciones_cargadas()->None:
         f"**{idx}** - {section} - Coord:{coordo} "
 
 def _get_color():
+    #for _ in range(100):
     red = np.random.randint(50,200)
     green = np.random.randint(50,200)
     blue = np.random.randint(50,200)
@@ -107,10 +98,7 @@ def agregar_seccion(
         coord_y:float)->None:
     """ Agrega la sección a la variable de sesión  """
     #Sacamos la clase correspondiente a la seccion
-    if idioma == "fr":        
-        clase_seccion = SECTION_MAPPING_FR[seccion]
-    elif idioma == "es":
-        clase_seccion = SECTION_MAPPING_ES[seccion]
+    clase_seccion = SECTION_MAPPING[seccion]
     #Filtramos las dimensiones
     dimensiones = [dim for dim in dimensiones if dim is not None]
     st.session_state["secciones"].append({
@@ -126,7 +114,7 @@ def borrar_seccion()->None:
         st.session_state["secciones"].pop()
         st.experimental_rerun()
     else:
-        st.error("La liste de sections est déjà vide") #TODO traduccion
+        st.error("La liste de sections est déjà vide")
     
 def cargar_dataframe()->None:
     """Carga DataFrame con los datos más relevantes de la sección compuesta.
@@ -167,14 +155,34 @@ def mostrar_opciones_seccion(seccion:str)->None:
     """
     x,y,e = None, None, None
 
-    if "Rectang" in seccion:
+    if "Carré" in seccion:
+        x = st.number_input(
+            "côtés (x) en mm",
+            step=10.0,
+            value=25.0,
+            min_value=20.0,
+            max_value=300.0,
+            format="%.1f"
+            #key="x",
+        )
+        if "Tube" in seccion:
+            e = st.number_input(
+                "épaisseur du carré (e) en mm",
+                step=1.0,
+                value=0.5,
+                min_value=0.5,
+                max_value=10.0,
+                format="%.1f"
+                #key="e",
+            )
+    if "Rectangle" in seccion:
         x = st.number_input(
             "longueur (x) en mm",
             step=10.0,
             format="%.1f",
             value=25.0,
             min_value=1.0,
-            max_value=200.0,
+            max_value=300.0,
             #key="x",
         )
         y = st.number_input(
@@ -183,19 +191,10 @@ def mostrar_opciones_seccion(seccion:str)->None:
             format="%.1f",
             value=25.0,
             min_value=1.0,
-            max_value=200.0,
+            max_value=300.0,
             #key="y",
         )
-        angulo = st.number_input(
-            "angle (α) en º",
-            step=1,
-            value=0,
-            min_value=-360,
-            max_value=360,
-            format="%d",
-            help="Angle en sens anti-horaire par rapport à l'horizontale."
-        )
-        if "Tub" in seccion:
+        if "Tube" in seccion:
             e = st.number_input(
                 "épaisseur du rectangle (e) en mm",
                 step=1.0,
@@ -205,7 +204,7 @@ def mostrar_opciones_seccion(seccion:str)->None:
                 format="%.1f",
                 #key="e",
             )
-    if "Rond" in seccion or "Redondo" in seccion:
+    if "Rond" in seccion:
         x = st.number_input(
             "ø (d) en mm",
             step=10.0,
@@ -216,8 +215,7 @@ def mostrar_opciones_seccion(seccion:str)->None:
             #key="x",
         )
         x = x / 2
-        angulo = None
-        if "Tub" in seccion:
+        if "Tube" in seccion:
             e = st.number_input(
                 "épaisseur du rond (e) en mm",
                 step=1.0,
@@ -227,7 +225,7 @@ def mostrar_opciones_seccion(seccion:str)->None:
                 format="%.1f"
                 #key="e",
             )
-    return x, y, e, angulo
+    return x, y, e
 
 def secciones_to_dict(nombre_seccion:str)->dict:
     """Devuelve el dict para meter en la base de datos,
@@ -258,21 +256,24 @@ def secciones_to_dict(nombre_seccion:str)->dict:
         "secciones" : list_secciones_dict,
     }
 
-def insertar_db_seccion_compuesta(dict_seccion:dict,usuario_sesion:str)->None:
-    """Recibe el dict de la seccion compuesta y el usuario y guarda la seccion
-    en la db del usuario para poder recuperarla mas adelante
+def insertar_db_seccion_compuesta(dict_seccion:dict)->None:
+    """Recibe un dict que representa la seccion compuesta
+    e inserta en db 
 
     Parameters
     ----------
     dict_seccion : dict
         _description_
-    usuario_sesion : str
+
+    Returns
+    -------
+    _type_
         _description_
     """
 
-    DATABASE[usuario_sesion].insert_one(dict_seccion)
+    DATABASE["SeccionesCompuestas"].insert_one(dict_seccion)
 
-def nombre_seccion_valido(nombre_seccion:str,usuario_sesion:str)->tuple[bool,str]:
+def nombre_seccion_valido(nombre_seccion:str)->tuple[bool,str]:
     """Función para validar que el nombre de la sección no existe ya en la base de datos
     Si existe devuelve un error
 
@@ -282,49 +283,26 @@ def nombre_seccion_valido(nombre_seccion:str,usuario_sesion:str)->tuple[bool,str
         _description_
     """
     #Validamos que no esté vacío
-    if not nombre_seccion:
+    if nombre_seccion == "":
         return False, "Le nom de la section ne peut pas être vide."
     #Validamos que haya una seccion cargada
-    if not st.session_state.get("secciones",[]):
+    if len(st.session_state.get("secciones",[])) == 0:
         return False, "Aucune section pour enregistrer"
     #Validamos que el nombre no exista ya:
-    if DATABASE[usuario_sesion].find_one({"nombre_seccion" : nombre_seccion}) is not None:
+    if DATABASE["SeccionesCompuestas"].find_one({"nombre_seccion" : nombre_seccion}) is not None:
         return False, "Le nom de la section existe déjà."
 
     return True, ""
 
-def añadir_configuraciones_a_dict(
-        to_db: dict,
-        *,
-        dim_ventana: tuple[int,int],
-        numerar_secciones: bool,
-        color_homogeneo: bool)->dict:
-    """Recoge el dict preparado para la db con los datos de sección
-    y añade datos de configuración de visualizacion como dimensiones de pantalla
-    y color de seccion o numeracion de las secciones
-    to_dic
-    """
-    vent_x, vent_y = dim_ventana
-    to_db["vent_x"] = vent_x
-    to_db["vent_y"] = vent_y
-    to_db["numerar_secciones"] = numerar_secciones
-    to_db["color_homogeneo"] = color_homogeneo
-
-    return to_db
-
 if __name__ == '__main__':
-    #Verificamos que haya usuario en sesión
-    usuario_sesion = st.session_state.get("usuario","")
-    if not usuario_sesion:
-        st.warning(tr.TRANS_MAPPING["registrarse_mensaje"][idioma])
-        st.stop()
-    
+    st.title("Sections Composées - Propriétés mécaniques")
     with st.expander("🟡 Informations Importantes"):
         st.markdown("""
                 - Les distances :green[**x**] et :green[**y**] sont en :red[mm].
-                - Le repère pour placer :green[**toutes**] les sections est le :red[**centre**] de la section.
-                - Le sens de l'angle est :green[**anti-horaire**] par rapport à :red[**l'horizontale.**]
-                - :red[**Attention!**] les :green[Wx et Wx] des sections compossées sont :red[**à revoir!**]""")
+                - Le repère pour placer les sections non circulaires :green[à épaisseur] est \
+                    le :red[centre] de l'épaisseur du coin :red[**gauche supérieur**].
+                - Le repère pour placer les sections non circulaires :green[pleines] est le coin :red[**supérieur gauche**].
+                - Le repère pour placer les sections circulaires est le :red[**centre**] du cercle.""")
     contenedor = st.empty()
 
     with st.sidebar:
@@ -334,7 +312,7 @@ if __name__ == '__main__':
             "Dimension x",
             step=10,
             help="Dimension x de la fenêtre",
-            value=st.session_state.get("vent_y",260), #prioriza valor cargado en sesion
+            value=260,
             min_value=100,
             max_value=500,
         )
@@ -343,51 +321,43 @@ if __name__ == '__main__':
             "Dimension y",
             step=10,
             help="Dimension x de la fenêtre",
-            value=st.session_state.get("vent_x",160),
+            value=160,
             min_value=100,
             max_value=500,
         )
     img = definir_ventana_personalizada(vent_x,vent_y)
     #Inicializamos variables de sesion necesarias
     init_sesion(contenedor,img)
-    #Sacamos todas las secciones de la db de ese usuario
-    db.sacar_secciones_db(usuario_sesion)
+    db.sacar_secciones_db()
 
     with st.sidebar:
         st.header("🖊 Dessiner la section")
         st.subheader("1- Choisir géométrie 📐")
 
-        numerar_secciones = st.checkbox(
-            "Montrer numéros des sections",
-            value=st.session_state.get("numerar_secciones",True),
-        )
-        color_homogeneo = st.checkbox(
-            "Mono couleur",
-            value=st.session_state.get("color_homogeneo",False),
-        )
-
         seccion = st.selectbox(
             "Type de section",
-            get_section_names(SECTION_MAPPING_FR if idioma == "fr" else SECTION_MAPPING_ES),
+            get_section_names(SECTION_MAPPING),
         )
 
-        x, y, e, angulo = mostrar_opciones_seccion(seccion)
+        x, y, e = mostrar_opciones_seccion(seccion)
 
         st.subheader("2- Choisir emplacement ⬇➡")
         coord_x = st.number_input(
             "Coordonnée x (mm) (vers la droite)",
             step=10.0,
-            value=vent_y/2,
             format="%.1f",
-            help="Coordonnée x du centre de la section."
+            help="Coordonnée x du coin supérieur gauche si\
+                \nla section est un carré ou rectangle. Coordonné x\
+                \ndu centre du cercle si section rond."
             #key="x",
         )
         coord_y = st.number_input(
             "Coordonnée y (mm) (vers le bas)",
             step=10.0,
-            value=vent_x/2,
             format="%.1f",
-            help="Coordonnée y du centre de la section."
+            help="Coordonnée y du coin supérieur gauche si\
+                \nla section est un carré ou rectangle. Coordonné y\
+                \ndu centre du cercle si section rond."
             #key="x",
         )
         col1, col2, col3 = st.columns(3)
@@ -410,14 +380,13 @@ if __name__ == '__main__':
 
         if agregar:
             borrar_contenedor(contenedor)
-            agregar_seccion(seccion,[x,y,e,angulo],coord_x,coord_y)
+            agregar_seccion(seccion,[x,y,e],coord_x,coord_y)
         if borrar:
             borrar_seccion()
         if borrar_todo:
             af.reset_todo()
 
         with st.expander("Enregistrer la section 💾"):
-            st.write(f"Sections disponibles pour :blue[*{usuario_sesion}*] : {db._devolver_secciones_restantes(usuario_sesion)}")
             nombre_seccion = st.text_input(
                 "Nom de la section",
             )
@@ -426,39 +395,29 @@ if __name__ == '__main__':
             )
 
             if guardar:
-                nombre_valido, error_nombre = nombre_seccion_valido(nombre_seccion,usuario_sesion)
+                nombre_valido, error_nombre = nombre_seccion_valido(nombre_seccion)
                 if not nombre_valido:
                     st.error(f"{error_nombre}")
                                     
                 else:
-                    if not db.verificar_secciones_restantes(usuario_sesion):
-                        st.error("Vous ne pouvez plus enregistrer de sections. Vous avez atteint la limite")
-                    else:
-                        to_db = secciones_to_dict(nombre_seccion)
-                        #Guardamos la configuración de la pantalla y las opciones de visualización
-                        to_db = añadir_configuraciones_a_dict(
-                            to_db,
-                            dim_ventana=(vent_x,vent_y),
-                            numerar_secciones=numerar_secciones,
-                            color_homogeneo=color_homogeneo)                        
-                        
-                        try:
-                            insertar_db_seccion_compuesta(to_db,usuario_sesion)
-                            st.success("Enregistrement correct.")
-                            db.reducir_secciones_restantes(usuario_sesion)
-                            with st.spinner("Patientez..."):
-                                time.sleep(2)
-                            st.experimental_rerun()
+                    to_db = secciones_to_dict(nombre_seccion)
+                    
+                    try:
+                        insertar_db_seccion_compuesta(to_db)
+                        st.success("Enregistrement correct.")
+                        time.sleep(2)
+                        st.experimental_rerun()
 
-                        except Exception as exc:
-                            st.error(f"Une erreur s'est produite lors de l'enregistrement: {exc}")
+                    except Exception as exc:
+                        st.error("Une erreur s'est produite lors de l'enregistrement.")
 
         with st.expander("Voir sections dessinées"):
             mostrar_secciones_cargadas()
-        
+
+        st.caption("Done by STM w/💗 2023")
     af.cargar_seccion_compuesta()
-    af.dibujar_seccion(img,numerar_secciones=numerar_secciones,color_homogeneo=color_homogeneo)
+    af.dibujar_seccion(img)
     
     if st.session_state.get("seccion_compuesta",None) is not None:
         cargar_dataframe()
-#st.session_state
+    #st.session_state

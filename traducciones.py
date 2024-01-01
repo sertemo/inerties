@@ -161,6 +161,4 @@ TRANS_MAPPING = {
                 5. En el apartado 'Sections enregistrées' puedes recuperar, dibujar y borrar las secciones guardadas""",
         "en" : ""
     },
-  
-
 }

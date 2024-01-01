@@ -52,7 +52,7 @@ if __name__ == '__main__':
     with st.sidebar:
         idioma = st.radio(
             label="Idioma",
-           options=("es","fr"),
+            options=("es","fr"),
             index=LANG_MAPPING[st.session_state.get("idioma","fr")],
             label_visibility="hidden",
         )
@@ -129,5 +129,4 @@ if __name__ == '__main__':
         st.markdown(tr.TRANS_MAPPING["info_utilizacion"][idioma])
         
         st.caption("Done by STM w/💗 2023")
-
     #st.session_state

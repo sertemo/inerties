@@ -1,15 +1,17 @@
 import math
 from typing import Union, Iterable
+from functools import cached_property
 
 class Seccion:
   def __init__(self,dimensiones:list[Union[float,int],Union[float,int,None],Union[float,int,None]]):
     if not isinstance(dimensiones,Iterable):
       raise TypeError("Las dimensiones deben ser una lista o una tupla")
+    self.dimensiones = dimensiones
 
     if "CircularMacizo" in self.__class__.__name__ :
       assert len(dimensiones) == 1, "(radio)"
       self.r = dimensiones[0]
-      self.e = None
+      self.e, self.angulo = None, None
       self.y = self.x = self.r
       self.descripcion = f"(radio = {self.r} mm)"
 
@@ -17,48 +19,38 @@ class Seccion:
       assert len(dimensiones) == 2, "(radio, espesor)"
       self.r, self.e = dimensiones
       self.x = self.y = self.r
+      self.angulo = None
       self.descripcion = f"(radio = {self.r} mm, espesor = {self.e} mm)"
 
     elif "RectangularMacizo" in self.__class__.__name__ :
-      assert len(dimensiones) == 2, "(longitud, ancho)"
-      self.x, self.y =  dimensiones
+      assert len(dimensiones) == 3, "(longitud, ancho,ángulo)"
+      self.x, self.y, self.angulo =  dimensiones
       self.r, self.e = None, None
-      self.descripcion = f"(longitud = {self.x} mm, ancho = {self.y} mm)"
+      self.descripcion = f"(longitud = {self.x} mm, ancho = {self.y} mm, ángulo = {self.angulo}º)"
 
     elif "RectangularHueco" in self.__class__.__name__ :
-      assert len(dimensiones) == 3, "(longitud, ancho, espesor)"
-      self.x, self.y, self.e =  dimensiones
+      assert len(dimensiones) == 4, "(longitud, ancho, espesor,ángulo)"
+      self.x, self.y, self.e, self.angulo =  dimensiones
       self.r = None
-      self.descripcion = f"(longitud = {self.x} mm, ancho = {self.y} mm, espesor = {self.e} mm)"
+      self.descripcion = f"(longitud = {self.x} mm, ancho = {self.y} mm, espesor = {self.e} mm, ángulo = {self.angulo}º)"
 
-    elif "CuadradoHueco" in self.__class__.__name__ :
-      assert len(dimensiones) == 2, "(lado, espesor)"
-      self.x, self.e =  dimensiones
-      self.y = self.x
-      self.r = None
-      self.descripcion = f"(lado = {self.x} mm, espesor = {self.e} mm)"
-
-    elif "CuadradoMacizo" in self.__class__.__name__ :
-      assert len(dimensiones) == 1, "(lado)"
-      self.x =  dimensiones[0]
-      self.y = self.x
-      self.r, self.e = None, None
-      self.descripcion = f"(lado = {self.x} mm)"
-
-  @property
+  @cached_property
   def tipo(self):
     return f"{self.__class__.__name__}"
+  
+  def to_dict(self):
+    """Función para transformar a dict la información necesaria para\
+    guardar en base de datos y posteriormente poder reconstruir la clase
+    """
+    seccion_dict = {
+      "tipo_seccion" : self.__class__.__name__,
+      "dimensiones" : self.dimensiones
+    }
+    return seccion_dict
 
   def __repr__(self):
-    lista_params = [p for p in [self.x,self.y,self.e] if p is not None]
+    lista_params = [p for p in [self.x,self.y,self.e, self.angulo] if p is not None]
     return f'''{self.__class__.__name__}{lista_params}'''
-    #\nReferencia (0,0) desde la esquina superior izquierda
-    #\n---- Sección ----\nx (longitud) = {self.x} mm\ny (ancho) = {self.y} mm\ne (espesor) = {self.e} mm\nr (radio) = {self.r} mm
-    #\n---- Área y centroide ----\nArea: {self.area_centroide[0]:.1f} mm2\nPosición centroide (x,y): {self.area_centroide[1]}
-    #\n---- Inercias ----\nIx: {self.momentos_inercia[0]/1e4:,.1f} cm4\nIy: {self.momentos_inercia[1]/1e4:,.1f} cm4
-    #\n---- Modulos resistentes ----\nWx: {self.modulos_resistentes[0]/1e3:,.1f} cm3\nWy: {self.modulos_resistentes[1]/1e3:,.1f} cm3
-    #\n------------
-    # '''
 
 class SeccionRectangularMacizo(Seccion):
   def __init__(self,dimensiones:tuple[Union[float,int],Union[float,int,None],Union[float,int,None]]):
@@ -67,30 +59,37 @@ class SeccionRectangularMacizo(Seccion):
     Para las dimensiones escribir siempre (x,y) en este orden.'''
     super().__init__(dimensiones)
 
-  @property
+  @cached_property
   def area_centroide(self):
-    ''' Devuelve el area y la posición del centroide respecto a la
-    esquina superior izquierda. Siempre en mm.'''
+    ''' Centroide referido ahora siempre al centro del rectangulo.'''
     area = self.x * self.y
-    self.centroide = (self.x / 2, self.y / 2)
-    return area, self.centroide
+    centroide = (0,0)
+    return area, centroide
 
-  @property
+  @cached_property
   def momentos_inercia(self):
     ''' Devuelve los momentos de inercia de la seccion con respecto
     al centroide de la sección. en mm4 '''
     Ix = (self.x * self.y ** 3) / 12
     Iy = (self.y * self.x ** 3) / 12
-    return Ix, Iy
 
-  @property
+    #Lógica para saber si está girado
+    theta = math.radians(self.angulo)
+    Ixx = Ix * math.cos(theta)**2 + Iy * math.sin(theta)**2
+    Iyy = Ix * math.sin(theta)**2 + Iy * math.cos(theta)**2
+    return Ixx, Iyy
+
+  @cached_property
   def modulos_resistentes(self):
     ''' Devuelve los modulos resistentes Wx, Wy de la seccion
     con respecto al centroide '''
     Ix, Iy = self.momentos_inercia
-    x, y = self.centroide
-    Wx = Ix / x
-    Wy = Iy / y
+    Wx = Ix / (self.y/2)
+    Wy = Iy / (self.x/2)
+    # Calcular los módulos resistentes en la dirección x e y
+    theta = math.radians(self.angulo)
+    Wxx = Wx * math.cos(theta) ** 2 + Wy * math.sin(theta) ** 2
+    Wyy = Wx * math.sin(theta) ** 2 + Wy * math.cos(theta) ** 2
     return Wx, Wy
 
 class SeccionRectangularHueco(Seccion):
@@ -98,21 +97,21 @@ class SeccionRectangularHueco(Seccion):
     ''' El eje x es el eje horizontal,\n
     el eje y es el eje vertical.\n
     e es el espesor.
-    (longitud,ancho,espesor)
-    Para las dimensiones escribir siempre (x,y,e) en este orden.'''
+    (longitud,ancho,espesor,ángulo)
+    Para las dimensiones escribir siempre (x,y,e,alpha) en este orden.'''
     super().__init__(dimensiones)
 
-  @property
+  @cached_property
   def area_centroide(self):
     ''' Devuelve el area y la posición del centroide respecto a la
     esquina superior izquierda. Siempre en mm.'''
     area_total = self.x * self.y
     area_hueco = (self.x - 2 * self.e) * (self.y - 2 * self.e)
     area = area_total - area_hueco
-    self.centroide = (self.x / 2, self.y / 2)
-    return area, self.centroide
+    centroide = (0,0)
+    return area, centroide
 
-  @property
+  @cached_property
   def momentos_inercia(self):
     ''' Devuelve los momentos de inercia de la seccion con respecto
     al centroide de la sección. en mm4 '''
@@ -124,17 +123,26 @@ class SeccionRectangularHueco(Seccion):
     Iy_hueco = (ancho_hueco * longitud_hueco ** 3) / 12
     Ix = Ix_total - Ix_hueco
     Iy = Iy_total - Iy_hueco
-    return Ix, Iy
 
-  @property
+    #Lógica para saber si está girado
+    theta = math.radians(self.angulo)
+    Ixx = Ix * math.cos(theta)**2 + Iy * math.sin(theta)**2
+    Iyy = Ix * math.sin(theta)**2 + Iy * math.cos(theta)**2
+    return Ixx, Iyy
+
+  @cached_property
   def modulos_resistentes(self):
     ''' Devuelve los modulos resistentes Wx, Wy de la seccion
     con respecto al centroide '''
     Ix, Iy = self.momentos_inercia
-    x, y = self.centroide
-    Wx = Ix / y
-    Wy = Iy / x
-    return Wx, Wy
+    _, (x, y) = self.area_centroide
+    Wx = Ix / (self.y/2)
+    Wy = Iy / (self.x/2)
+    # Calcular los módulos resistentes en la dirección x e y
+    theta = math.radians(self.angulo)
+    Wxx = Wx * math.cos(theta) ** 2 + Wy * math.sin(theta) ** 2
+    Wyy = Wx * math.sin(theta) ** 2 + Wy * math.cos(theta) ** 2
+    return Wxx, Wyy
 
 class SeccionCircularHueco(Seccion):
   ''' Introducir el radio de la sección. '''
@@ -146,7 +154,7 @@ class SeccionCircularHueco(Seccion):
     Para las dimensiones escribir siempre (x,y,e) en este orden.'''
     super().__init__(dimensiones)
 
-  @property
+  @cached_property
   def area_centroide(self):
     ''' Devuelve el area y la posición del centroide respecto al
     centro de la circunferencia. Siempre en mm.'''
@@ -154,10 +162,10 @@ class SeccionCircularHueco(Seccion):
     area_total = math.pi * self.r ** 2
     area_hueco = math.pi * radio_interior ** 2
     area = area_total - area_hueco
-    self.centroide = (0, 0)
-    return area, self.centroide
+    centroide = (0, 0)
+    return area, centroide
 
-  @property
+  @cached_property
   def momentos_inercia(self):
     ''' Devuelve los momentos de inercia de la seccion con respecto
     al centroide de la sección. '''
@@ -168,7 +176,7 @@ class SeccionCircularHueco(Seccion):
     Iy = Iy_total - Iy_hueco
     return Ix, Iy
 
-  @property
+  @cached_property
   def modulos_resistentes(self):
     ''' Devuelve los modulos resistentes Wx, Wy de la seccion
     con respecto al centroide '''
@@ -187,7 +195,7 @@ class SeccionCircularMacizo(Seccion):
     Para las dimensiones escribir siempre (x,y,e) en este orden.'''
     super().__init__(dimensiones)
 
-  @property
+  @cached_property
   def area_centroide(self):
     ''' Devuelve el area y la posición del centroide respecto al
     centro de la circunferencia. Siempre en mm.'''
@@ -195,14 +203,14 @@ class SeccionCircularMacizo(Seccion):
     self.centroide = (0, 0)
     return area, self.centroide
 
-  @property
+  @cached_property
   def momentos_inercia(self):
     ''' Devuelve los momentos de inercia de la seccion con respecto
     al centroide de la sección. '''
     Ix = Iy = (math.pi * self.r ** 4) / 4
     return Ix, Iy
 
-  @property
+  @cached_property
   def modulos_resistentes(self):
     ''' Devuelve los modulos resistentes Wx, Wy de la seccion
     con respecto al centroide '''
@@ -211,88 +219,14 @@ class SeccionCircularMacizo(Seccion):
     Wx = Wy = Ix / self.r
     return Wx, Wy
 
-class SeccionCuadradoHueco(Seccion):
-  def __init__(self,dimensiones:tuple[Union[float,int],Union[float,int,None],Union[float,int,None]]):
-    ''' El eje x es el eje horizontal,\n
-    el eje y es el eje vertical.\n
-    e es el espesor.
-    (longitud,ancho,espesor)
-    Para las dimensiones escribir siempre (x,y,e) en este orden.'''
-    super().__init__(dimensiones)
-
-  @property
-  def area_centroide(self):
-    ''' Devuelve el area y la posición del centroide respecto a la
-    esquina superior izquierda. Siempre en mm.'''
-    area_total = self.x ** 2
-    area_hueco = (self.x - 2 * self.e) ** 2
-    area = area_total - area_hueco
-    self.centroide = (self.x / 2, self.x / 2)
-    return area, self.centroide
-
-  @property
-  def momentos_inercia(self):
-    ''' Devuelve los momentos de inercia de la seccion con respecto
-    al centroide de la sección. '''
-    lado_hueco = self.x - 2 * self.e
-    Ix_total = Iy_total = (self.x ** 4) / 12
-    Ix_hueco = Iy_hueco = (lado_hueco ** 4) / 12
-    Ix = Ix_total - Ix_hueco
-    Iy = Iy_total - Iy_hueco
-    return Ix, Iy
-
-  @property
-  def modulos_resistentes(self):
-    ''' Devuelve los modulos resistentes Wx, Wy de la seccion
-    con respecto al centroide '''
-    Ix, Iy = self.momentos_inercia
-    x, y = self.centroide
-    Wx = Ix / y
-    Wy = Iy / x
-    return Wx, Wy
-
-class SeccionCuadradoMacizo(Seccion):
-  def __init__(self,dimensiones:tuple[Union[float,int],Union[float,int,None],Union[float,int,None]]):
-    ''' El eje x es el eje horizontal,\n
-    el eje y es el eje vertical.\n
-    e es el espesor.
-    (longitud,ancho,espesor)
-    Para las dimensiones escribir siempre (x,y,e) en este orden.'''
-    super().__init__(dimensiones)
-
-  @property
-  def area_centroide(self):
-    ''' Devuelve el area y la posición del centroide respecto a la
-    esquina superior izquierda. Siempre en mm.'''
-    area = self.x ** 2
-    self.centroide = (self.x / 2, self.x / 2)
-    return area, self.centroide
-
-  @property
-  def momentos_inercia(self):
-    ''' Devuelve los momentos de inercia de la seccion con respecto
-    al centroide de la sección. '''
-    Ix = Iy = (self.x ** 4) / 12
-    return Ix, Iy
-
-  @property
-  def modulos_resistentes(self):
-    ''' Devuelve los modulos resistentes Wx, Wy de la seccion
-    con respecto al centroide '''
-    Ix, Iy = self.momentos_inercia
-    x, y = self.centroide
-    Wx = Ix / y
-    Wy = Iy / x
-    return Wx, Wy
-
 class SeccionCompuesta:
     def __init__(self, secciones:list[dict]):
         self.secciones = secciones
 
-    @property
+    @cached_property
     def area_centroide(self):
         ''' Devuelve la posición (x,y) del centroide de la sección compuesta en mm.
-        La referencia es la esquina superior izquierda más a la izquierda. '''
+        La referencia es el centro de la sección. '''
 
         area_total = 0
         centroide_total_x = 0
@@ -311,7 +245,7 @@ class SeccionCompuesta:
 
         return area_total,centroide_composicion
 
-    @property
+    @cached_property
     def momentos_inercia(self):
       _,centroid_composicion = self.area_centroide
 
@@ -336,7 +270,7 @@ class SeccionCompuesta:
 
       return Ix_total, Iy_total
 
-    @property
+    @cached_property
     def modulos_resistentes(self):
       #calculamos los puntos mas alejados del centroide
       #Para la inercia Ix, calculamos los puntos y
@@ -346,16 +280,12 @@ class SeccionCompuesta:
 
       for seccion in self.secciones:
         #En el caso de seccion circular el centroide y la referencia de la ubicacion coinciden
-        if x_centroide == seccion["ubicacion"][0]:
-          puntos_alejados_x.append(seccion["seccion"].x)
-          puntos_alejados_y.append(seccion["seccion"].y)
-        else:
-          puntos_alejados_x.append(y_centroide - seccion["ubicacion"][1])
-          puntos_alejados_y.append(x_centroide - seccion["ubicacion"][0])
+        puntos_alejados_x.append(abs(seccion["ubicacion"][1] + seccion["seccion"].y/2 - y_centroide))
+        puntos_alejados_y.append(abs(seccion["ubicacion"][0] + seccion["seccion"].x/2 - x_centroide))
 
       Ix, Iy = self.momentos_inercia
-      Wx = Ix / max(puntos_alejados_y)
-      Wy = Iy / max(puntos_alejados_x)
+      Wx = Ix / max(puntos_alejados_x)
+      Wy = Iy / max(puntos_alejados_y)
       return Wx, Wy
 
     def __repr__(self):

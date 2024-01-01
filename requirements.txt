@@ -1,3 +1,9 @@
 pandas
 numpy
-opencv-python
+opencv-python-headless
+pymongo
+python-dotenv
+pydantic
+passlib
+pytz
+yagmail

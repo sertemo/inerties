@@ -112,7 +112,7 @@ def borrar_seccion()->None:
         if len(st.session_state["secciones"]) == 1:
             del st.session_state["seccion_compuesta"]
         st.session_state["secciones"].pop()
-        st.experimental_rerun()
+        st.rerun()
     else:
         st.error("La liste de sections est déjà vide")
     
@@ -406,7 +406,7 @@ if __name__ == '__main__':
                         insertar_db_seccion_compuesta(to_db)
                         st.success("Enregistrement correct.")
                         time.sleep(2)
-                        st.experimental_rerun()
+                        st.rerun()
 
                     except Exception as exc:
                         st.error("Une erreur s'est produite lors de l'enregistrement.")

@@ -18,6 +18,7 @@ Las secciones suelen ser rectangulares, cuadradas y circulares. Se pueden repres
     - Añadida la posibilidad de guardar y cargar las opciones de visualización a la vez que las secciones
 -12/08/2023 - Creado sistema sencillo de registro y autenticación y bases de datos para que cada usuario pueda guardar sus propias secciones. Se ha puesto un límite de 5 secciones máximas para guardar de momento. Al registrarse el usuario está inactivo, se envía un mail al administrador que deberá activar manualmente al usuario para que pueda usar la aplicación.
 - 14/08/2023 - Posibilidad de cambiar idioma de los textos
+- 12/08/2024 - Cambiado experimental_rerun a rerun para evitar error de streamlit
 
 ## Ideas para implementar
 - Mejorar el código para el cálculo de Wx e Wy

@@ -86,7 +86,7 @@ if __name__ == '__main__':
                             st.session_state["usuario"] = user
                             with st.spinner(tr.TRANS_MAPPING["cargar_datos"][idioma]):
                                 time.sleep(2)
-                                st.experimental_rerun()
+                                st.rerun()
 
         #Formulario para registrarse
         st.caption(tr.TRANS_MAPPING["pregunta_registrar"][idioma])

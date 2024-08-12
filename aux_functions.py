@@ -16,7 +16,7 @@ def reset_todo(rerun_app:bool=True)->None:
         del st.session_state["color_homogeneo"]
         del st.session_state["vent_x"]
     if rerun_app:
-        st.experimental_rerun()
+        st.rerun()
 
 def cargar_seccion_compuesta()->None:
     """Carga la lista de secciones independientes en la clase SeccionCompuesta y lo añade

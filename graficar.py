@@ -104,7 +104,7 @@ class GraficarSeccion:
     def _draw_rotated_rectangle(self,img, center, width, height, angle, color, thickness):
         # Construimos la caja del rectángulo
         box = cv.boxPoints(((center[0], center[1]), (width, height), angle))
-        box = np.int0(box)  # Aseguramos que las coordenadas sean enteras
+        box = np.int(box)  # Aseguramos que las coordenadas sean enteras
 
         # Dibujamos el rectángulo en la imagen
         cv.drawContours(img, [box], 0, color, thickness)
